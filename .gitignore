@@ -9,3 +9,8 @@ dist-ssr
 .vscode/*
 !.vscode/extensions.json
 .idea
+
+# Local env (never commit secrets)
+.env
+.env.local
+.env.*.local

@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { motion, AnimatePresence } from 'framer-motion';
 import { twMerge } from 'tailwind-merge';
+import PreviewGate from './preview/PreviewGate.jsx';
 import {
   Maximize,
   FileText,
@@ -677,6 +678,7 @@ const Footer = () => (
           advice.
         </p>
         <p>&copy; {new Date().getFullYear()} Lakeview Homes property listing. All rights reserved.</p>
+        <p className="mt-2 text-neutral-500">Designed and developed by Goodvibes LTD.</p>
       </div>
     </div>
   </footer>
@@ -696,20 +698,22 @@ export default function App() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white text-neutral-900 antialiased">
-      <Header scrolled={scrolled} />
-      <main>
-        <HeroSection />
-        <PropertyFacts />
-        <Disclosures />
-        <LotBreakdown />
-        <GallerySection />
-        <DocumentSection />
-        <Timeline />
-        <FaqSection />
-        <InquiryForm />
-      </main>
-      <Footer />
-    </div>
+    <PreviewGate slug="lakeview-putatan">
+      <div className="min-h-screen bg-white text-neutral-900 antialiased">
+        <Header scrolled={scrolled} />
+        <main>
+          <HeroSection />
+          <PropertyFacts />
+          <Disclosures />
+          <LotBreakdown />
+          <GallerySection />
+          <DocumentSection />
+          <Timeline />
+          <FaqSection />
+          <InquiryForm />
+        </main>
+        <Footer />
+      </div>
+    </PreviewGate>
   );
 }
