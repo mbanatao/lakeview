@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/goodvibes-admin", "destination": "/index.html" }
+  ]
+}

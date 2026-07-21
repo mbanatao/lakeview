@@ -1,59 +1,67 @@
-# Lakeview Homes — Property Preview
+# Lakeview Homes Property Website
 
-A single-page property-listing site for a **195 sqm house-and-lot** in Lakeview Homes
-Subdivision, Putatan, Muntinlupa City. Built with Vite + React + Tailwind CSS.
+A buyer-facing property presentation for 301 Ilang-Ilang Street, Lakeview Homes Subdivision, Putatan, Muntinlupa City. Built with Vite, React, Tailwind CSS, and the RealMatch Supabase project.
 
-The property comprises two adjoining titled lots (Lot 5-A: 95 sqm, Lot 5-B: 100 sqm)
-sold together, with an existing single-storey structure. The page is a preview only —
-all figures, titles, annotations, and financing details are presented as **subject to
-independent verification**.
+## Property presentation
+
+The property comprises two adjoining titled lots offered together:
+
+- Lot 5-A: 95 sqm
+- Lot 5-B: 100 sqm
+- Combined titled area: 195 sqm
+
+The public page includes the real-property gallery, location advantages, property composition, title disclosures, buyer inquiry actions, and viewing contact links.
+
+## Goodvibes LTD private demo
+
+The site has a server-controlled homeowner preview and manual GCash activation workflow.
+
+- Preview duration: 60 seconds
+- Activation price: ₱5,000
+- Payment method: supplied Goodvibes LTD GCash QR
+- Payment verification: manual review by Goodvibes LTD
+- Administrator email: `markjohnsonbanatao888@gmail.com`
+- Administrator page: `/goodvibes-admin`
+
+After the preview expires, the homeowner can scan the GCash QR, submit the payment reference and receipt, and wait for verification. The receipt is stored privately in the RealMatch Supabase Storage bucket. Once the administrator approves the request, the property website becomes active and unlocks automatically.
+
+## Administration
+
+Open `/goodvibes-admin`, request a secure sign-in link, and use the link sent to `markjohnsonbanatao888@gmail.com`.
+
+The dashboard allows the administrator to:
+
+- review activation submissions;
+- view receipts through short-lived signed URLs;
+- approve and activate the property website;
+- reject invalid submissions.
 
 ## Stack
 
-- **Vite 5** + **React 18**
-- **Tailwind CSS 3**
-- **framer-motion** — animations & lightbox transitions
-- **lucide-react** — icons
-- **react-hook-form** + **zod** — the inquiry form and validation
+- Vite 5 and React 18
+- Tailwind CSS 3
+- Framer Motion
+- Lucide React
+- React Hook Form and Zod
+- RealMatch Supabase database, Storage, Auth, and Edge Function
 
-## Getting started
+## Development
 
 ```bash
 npm install
-npm run dev      # start the dev server (http://localhost:5173)
-npm run build    # production build to ./dist
-npm run preview  # preview the production build
+npm run dev
 ```
 
-## Sections
+## Build
 
-Hero · Property facts · Buyer disclosures · Lot composition · Categorised photo gallery
-(with filter + lightbox) · Due-diligence documents · Buying-process timeline · FAQ ·
-Inquiry form · Footer.
-
-## Photos
-
-The 11 property photos live in `public/property/`, organised by area:
-
-```
-public/property/
-  exterior/       facade.jpg, gate.jpg, street.jpg
-  living/         coffered-ceiling.jpg, living-room.jpg, staircase.jpg
-  bedrooms/       brick-accent.jpg, wardrobe.jpg
-  kitchen-dining/ kitchen.jpg, dining.jpg
-  office/         home-office.jpg
+```bash
+npm run build
 ```
 
-To swap or add photos, drop files into these folders and update the `IMAGES` array in
-`src/App.jsx`.
+## Property photos
 
-## Inquiry form
+The real property images are stored under `public/property/`. The supplied payment QR is stored at `public/payments/goodvibes-gcash-qr.svg`.
 
-The form validates client-side (react-hook-form + zod) and currently simulates
-submission (logs to the console). Wire the `onSubmit` handler in `src/App.jsx` to a real
-endpoint or email service to receive live inquiries.
+## Important payment note
 
-## Notes
-
-Property content is a preview and does not constitute an offer or warranty. See the
-disclaimer in the site footer.
+A static GCash QR does not provide automatic payment confirmation. The payment must be manually reviewed by Goodvibes LTD. After an authorized administrator approves the submission, the website unlocks automatically without a code change or redeployment.

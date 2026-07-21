@@ -1,388 +1,242 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { twMerge } from 'tailwind-merge';
 import {
-  Maximize,
-  FileText,
-  ChevronDown,
-  ArrowLeft,
-  ArrowRight as ArrowRightIcon,
-  X,
-  Check,
   AlertCircle,
+  ArrowLeft,
+  ArrowRight,
+  Building2,
+  Check,
+  ChevronDown,
   FileCheck,
-  Download,
-  MapPin,
+  FileText,
+  HeartHandshake,
+  Hospital,
   Loader2,
+  Mail,
+  MapPin,
+  Maximize,
+  MessageCircle,
+  Phone,
+  School,
+  ShoppingBasket,
+  X,
 } from 'lucide-react';
 
-// ==========================================
-// 1. PROPERTY DATA CONFIGURATION
-// ==========================================
-const PROPERTY_DATA = {
+const PROPERTY = {
   address: '301 Ilang-Ilang Street',
   subdivision: 'Lakeview Homes Subdivision',
   city: 'Putatan, Muntinlupa City, Metro Manila',
   totalLotArea: 195,
+  structure: 'Existing finished residential structure',
   lots: [
-    { name: 'Lot 5-A', area: 95, tct: 'TCT No. 014-2017000***' },
-    { name: 'Lot 5-B', area: 100, tct: 'TCT No. 014-2017000***' },
+    { name: 'Lot 5-A', area: 95, tct: 'TCT No. 014-2017••••430' },
+    { name: 'Lot 5-B', area: 100, tct: 'TCT No. 014-2017••••431' },
   ],
-  structure: 'Existing single-storey structure',
-  status: 'Two adjoining titled lots — documents available for due diligence.',
 };
 
-const UNVERIFIED_LABEL = 'Subject to verification';
+const CONTACT = {
+  phoneDisplay: '0968-184-1001',
+  phoneHref: 'tel:+639681841001',
+  whatsappHref:
+    'https://wa.me/639681841001?text=Hello%2C%20I%20am%20interested%20in%20the%20Lakeview%20Homes%20property.',
+  email: 'markjohnsonbanatao888@gmail.com',
+};
 
-// All 11 property photos, organised by category.
-const IMAGES = [
-  { src: '/property/exterior/facade.jpg', alt: 'Property front facade with tiled feature wall', category: 'Exterior' },
-  { src: '/property/exterior/gate.jpg', alt: 'Front gate and entrance walkway', category: 'Exterior' },
-  { src: '/property/exterior/street.jpg', alt: 'Street view of the property frontage', category: 'Exterior' },
-  { src: '/property/living/coffered-ceiling.jpg', alt: 'Living area with coffered wood ceiling and ceiling fan', category: 'Living Areas' },
-  { src: '/property/living/living-room.jpg', alt: 'Main living room with seating and natural light', category: 'Living Areas' },
-  { src: '/property/living/staircase.jpg', alt: 'Living area with console and staircase', category: 'Living Areas' },
-  { src: '/property/bedrooms/brick-accent.jpg', alt: 'Bedroom with brick accent wall and air-conditioning', category: 'Bedrooms' },
-  { src: '/property/bedrooms/wardrobe.jpg', alt: 'Bedroom with built-in wardrobe', category: 'Bedrooms' },
-  { src: '/property/kitchen-dining/kitchen.jpg', alt: 'Kitchen with range hood and gas stove', category: 'Kitchen & Dining' },
-  { src: '/property/kitchen-dining/dining.jpg', alt: 'Dining area with granite table and windows', category: 'Kitchen & Dining' },
-  { src: '/property/office/home-office.jpg', alt: 'Interior space configured as a home office', category: 'Home Office' },
-];
-
-// Optional prefix for image URLs. Defaults to '' so images are served from the
-// app's own /public folder. A deployment can set VITE_IMAGE_BASE to serve them
-// from an external origin (e.g. a CDN or the source repo) without bundling them.
 const IMAGE_BASE = import.meta.env.VITE_IMAGE_BASE ?? '';
 const imgUrl = (path) => `${IMAGE_BASE}${path}`;
 
-const HERO_IMAGE = '/property/exterior/facade.jpg';
+const IMAGES = [
+  { src: '/property/exterior/facade.jpg', alt: 'Street-facing facade of the Lakeview Homes property', category: 'Exterior' },
+  { src: '/property/exterior/gate.jpg', alt: 'Front gate and landscaped entrance', category: 'Exterior' },
+  { src: '/property/exterior/street.jpg', alt: 'Property frontage along Ilang-Ilang Street', category: 'Exterior' },
+  { src: '/property/living/coffered-ceiling.jpg', alt: 'Living area with decorative ceiling details', category: 'Living Areas' },
+  { src: '/property/living/living-room.jpg', alt: 'Main living room with seating and natural light', category: 'Living Areas' },
+  { src: '/property/living/staircase.jpg', alt: 'Living area with interior staircase', category: 'Living Areas' },
+  { src: '/property/bedrooms/brick-accent.jpg', alt: 'Bedroom with accent wall and air-conditioning unit', category: 'Bedrooms' },
+  { src: '/property/bedrooms/wardrobe.jpg', alt: 'Bedroom with built-in wardrobe', category: 'Bedrooms' },
+  { src: '/property/kitchen-dining/kitchen.jpg', alt: 'Fitted kitchen with cabinetry and range hood', category: 'Kitchen & Dining' },
+  { src: '/property/kitchen-dining/dining.jpg', alt: 'Dining area with windows', category: 'Kitchen & Dining' },
+  { src: '/property/office/home-office.jpg', alt: 'Interior room configured as a home office', category: 'Home Office' },
+];
 
-const GALLERY_CATEGORIES = ['All', 'Exterior', 'Living Areas', 'Bedrooms', 'Kitchen & Dining', 'Home Office'];
+const CATEGORIES = ['All', 'Exterior', 'Living Areas', 'Bedrooms', 'Kitchen & Dining', 'Home Office'];
 
-const TIMELINE = [
-  { step: 1, title: 'Initial Inquiry', desc: 'Request the property brief and ask preliminary questions.' },
-  { step: 2, title: 'Property Viewing', desc: 'Schedule an on-site visit to inspect the physical condition of the property.' },
-  { step: 3, title: 'Due Diligence', desc: 'Request the Due-Diligence Pack to independently verify titles, taxes, and annotations.' },
-  { step: 4, title: 'Offer & Negotiation', desc: 'Submit a formal offer based on your technical and legal findings.' },
-  { step: 5, title: 'Contract & Turnover', desc: 'Execution of the Deed of Absolute Sale and transfer of possession.' },
+const NEARBY = [
+  { icon: Building2, title: 'City services', text: 'Convenient access to Muntinlupa City Hall and government offices.' },
+  { icon: School, title: 'Schools nearby', text: 'Educational institutions are available throughout the Putatan area.' },
+  { icon: Hospital, title: 'Healthcare access', text: 'Hospitals, clinics, and community health services are close by.' },
+  { icon: ShoppingBasket, title: 'Daily essentials', text: 'Groceries, convenience stores, pharmacies, and neighborhood shops nearby.' },
 ];
 
 const FAQS = [
-  { q: 'Is the property comprised of a single title?', a: 'No. The property consists of two adjoining titled lots (Lot 5-A at 95 sqm and Lot 5-B at 100 sqm) totaling 195 sqm. They are being sold together.' },
-  { q: 'What is the status of the Rule 74 annotation?', a: 'A Section 4, Rule 74 annotation (dated 2017) appears on both titles. Requirements for its cancellation and the property’s transferability are currently being verified with the Registry of Deeds.' },
-  { q: 'Is the property flood-free?', a: 'Subject to verification. Buyers are encouraged to review local hazard maps and conduct their own neighborhood assessments during viewing.' },
-  { q: 'Can this be used for commercial purposes?', a: 'Subject to verification. While Barangay Putatan has mixed-use zones, buyers must verify specific business-use permissions and zoning ordinances with the Muntinlupa City Hall.' },
-  { q: 'Is the property eligible for bank or Pag-IBIG financing?', a: 'Subject to verification. Financing eligibility depends on the lending institution’s appraisal of the property condition and title status (including the existing annotation).' },
+  {
+    q: 'Is this one titled property?',
+    a: 'The sale covers two adjoining titled lots: Lot 5-A at 95 sqm and Lot 5-B at 100 sqm, for a combined titled area of 195 sqm. They are being offered together.',
+  },
+  {
+    q: 'What is the Rule 74 annotation?',
+    a: 'A Section 4, Rule 74 annotation appears on both titles. The applicable cancellation, documentary, and transfer requirements should be confirmed with the Registry of Deeds during due diligence.',
+  },
+  {
+    q: 'Is the property flood-free?',
+    a: 'Flood status has not been independently verified. Buyers should review official hazard maps and inspect the neighborhood personally.',
+  },
+  {
+    q: 'Can the property be used for business?',
+    a: 'Business use is not represented as approved. Buyers should verify zoning, subdivision restrictions, permits, and allowable use with the relevant authorities.',
+  },
+  {
+    q: 'Can this be financed?',
+    a: 'Financing depends on the lender’s appraisal, buyer qualification, property condition, and title review. Buyers should confirm directly with their chosen bank or financing institution.',
+  },
 ];
 
-// ==========================================
-// 2. UI PRIMITIVES (shadcn/ui-style)
-// ==========================================
 const Button = ({ children, variant = 'primary', className = '', ...props }) => {
-  const baseStyle =
-    'inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950 disabled:pointer-events-none disabled:opacity-50';
-  const variants = {
-    primary: 'bg-neutral-900 text-white hover:bg-neutral-900/90 shadow-sm',
-    outline: 'border border-neutral-200 bg-white hover:bg-neutral-100 text-neutral-900',
-    ghost: 'hover:bg-neutral-100 hover:text-neutral-900 text-neutral-600',
+  const styles = {
+    primary: 'bg-neutral-950 text-white hover:bg-neutral-800',
+    outline: 'border border-neutral-300 bg-white text-neutral-900 hover:bg-neutral-100',
+    light: 'bg-white text-neutral-950 hover:bg-neutral-100',
   };
-  // twMerge lets a per-instance className reliably override the variant's
-  // colors (e.g. a white CTA on the dark hero), regardless of CSS source order.
   return (
-    <button className={twMerge(baseStyle, variants[variant], 'px-4 py-2', className)} {...props}>
+    <button
+      className={twMerge(
+        'inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 disabled:opacity-50',
+        styles[variant],
+        className,
+      )}
+      {...props}
+    >
       {children}
     </button>
   );
 };
 
-const Input = React.forwardRef(({ className = '', ...props }, ref) => (
-  <input
-    ref={ref}
-    className={`flex h-10 w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-neutral-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
-    {...props}
-  />
-));
-Input.displayName = 'Input';
+const scrollTo = (id) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-const Textarea = React.forwardRef(({ className = '', ...props }, ref) => (
-  <textarea
-    ref={ref}
-    className={`flex min-h-[80px] w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-neutral-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
-    {...props}
-  />
-));
-Textarea.displayName = 'Textarea';
-
-// ==========================================
-// 3. PAGE SECTIONS
-// ==========================================
 const Header = ({ scrolled }) => (
-  <header
-    className={`fixed top-0 w-full z-40 transition-all duration-300 border-b ${
-      scrolled
-        ? 'bg-white/95 backdrop-blur-sm border-neutral-200 py-4 shadow-sm'
-        : 'bg-transparent border-transparent py-6'
-    }`}
-  >
-    <div className="max-w-6xl mx-auto px-6 flex justify-between items-center">
-      <div className={`font-semibold tracking-wide text-sm ${scrolled ? 'text-neutral-900' : 'text-neutral-900 md:text-white'}`}>
-        LAKEVIEW HOMES, PUTATAN
-      </div>
-      <div className="hidden md:flex gap-8 text-sm font-medium">
-        {['overview', 'gallery', 'documents'].map((id) => (
-          <a
-            key={id}
-            href={`#${id}`}
-            className={`${scrolled ? 'text-neutral-600' : 'text-white/90'} hover:text-neutral-900 transition-colors capitalize`}
-          >
-            {id === 'documents' ? 'Due Diligence' : id}
+  <header className={`fixed inset-x-0 top-0 z-40 transition-all ${scrolled ? 'border-b border-neutral-200 bg-white/95 py-3 shadow-sm backdrop-blur' : 'bg-transparent py-5'}`}>
+    <div className="mx-auto flex max-w-7xl items-center justify-between px-5 md:px-8">
+      <a href="#top" className={`text-xs font-bold tracking-[0.16em] ${scrolled ? 'text-neutral-950' : 'text-white'}`}>
+        LAKEVIEW HOMES · PUTATAN
+      </a>
+      <nav className="hidden items-center gap-7 md:flex">
+        {['gallery', 'location', 'details', 'documents'].map((id) => (
+          <a key={id} href={`#${id}`} className={`text-sm font-medium capitalize ${scrolled ? 'text-neutral-600 hover:text-neutral-950' : 'text-white/85 hover:text-white'}`}>
+            {id}
           </a>
         ))}
-      </div>
-      <a
-        href="#inquire"
-        className={`px-5 py-2 rounded-md text-sm font-medium transition-colors ${
-          scrolled ? 'bg-neutral-900 text-white hover:bg-neutral-800' : 'bg-white text-neutral-900 hover:bg-neutral-100'
-        }`}
-      >
-        Request Brief
-      </a>
+      </nav>
+      <Button variant={scrolled ? 'primary' : 'light'} className="px-5 py-2" onClick={() => scrollTo('inquire')}>
+        Book a Viewing
+      </Button>
     </div>
   </header>
 );
 
-const scrollTo = (id) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
-
-const HeroSection = () => (
-  <section className="relative h-[85vh] w-full bg-neutral-900 flex flex-col justify-end pb-24 md:pb-32 overflow-hidden">
-    <div className="absolute inset-0 z-0">
-      <img src={imgUrl(HERO_IMAGE)} alt="Property facade" className="w-full h-full object-cover opacity-50" />
-      <div className="absolute inset-0 bg-gradient-to-t from-neutral-900 via-neutral-900/60 to-neutral-900/20" />
-    </div>
-    <div className="relative z-10 px-6 max-w-6xl mx-auto w-full">
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
-        <p className="text-white/70 uppercase tracking-widest text-xs font-semibold mb-4 border-l-2 border-white/70 pl-3">
-          For Sale &bull; Property Preview
-        </p>
-        <h1 className="text-3xl md:text-5xl lg:text-6xl font-medium text-white leading-tight tracking-tight mb-6 max-w-3xl">
-          195 sqm House-and-Lot Property in Lakeview Homes, Putatan
+const Hero = () => (
+  <section id="top" className="relative flex min-h-[88vh] items-end overflow-hidden bg-neutral-950 pb-16 md:pb-24">
+    <img src={imgUrl(IMAGES[0].src)} alt={IMAGES[0].alt} className="absolute inset-0 h-full w-full object-cover opacity-65" />
+    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-black/10" />
+    <div className="relative mx-auto w-full max-w-7xl px-5 md:px-8">
+      <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }} className="max-w-3xl">
+        <p className="mb-4 text-xs font-bold uppercase tracking-[0.22em] text-white/75">For sale · Lakeview Homes</p>
+        <h1 className="max-w-4xl text-4xl font-semibold leading-[1.05] tracking-tight text-white md:text-6xl lg:text-7xl">
+          195 sqm house-and-lot property in central Putatan.
         </h1>
-        <p className="text-neutral-300 text-base md:text-lg max-w-2xl leading-relaxed mb-8">
-          Two adjoining titled lots with an existing single-storey structure, suitable for family living, home-office
-          use, or future redevelopment.
+        <p className="mt-5 max-w-2xl text-base leading-relaxed text-white/80 md:text-xl">
+          Two adjoining titled lots with a finished residence, close to city services, schools, healthcare, groceries, and everyday essentials.
         </p>
-        <div className="flex flex-col sm:flex-row gap-4">
-          <Button onClick={() => scrollTo('inquire')} className="h-12 px-8 text-base bg-white text-neutral-900 hover:bg-neutral-100">
-            Schedule a Viewing
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => scrollTo('documents')}
-            className="h-12 px-8 text-base bg-transparent border-white/30 text-white hover:bg-white/10"
-          >
-            View Disclosures
-          </Button>
+        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+          <Button variant="light" className="px-7 py-3.5 text-base" onClick={() => scrollTo('gallery')}>View Photos</Button>
+          <Button className="border border-white/30 bg-white/10 px-7 py-3.5 text-base text-white backdrop-blur hover:bg-white/20" onClick={() => scrollTo('inquire')}>Schedule Viewing</Button>
         </div>
       </motion.div>
     </div>
   </section>
 );
 
-const PropertyFacts = () => (
-  <section className="bg-white border-b border-neutral-200">
-    <div className="max-w-6xl mx-auto px-6 py-10">
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
-        <div>
-          <p className="text-neutral-500 text-xs uppercase tracking-wide mb-1">Asking Price</p>
-          <p className="text-base font-medium text-neutral-900">{UNVERIFIED_LABEL}</p>
+const Highlights = () => (
+  <section className="border-b border-neutral-200 bg-white">
+    <div className="mx-auto grid max-w-7xl grid-cols-2 gap-px bg-neutral-200 md:grid-cols-4">
+      {[
+        ['195 sqm', 'Combined titled area'],
+        ['2 titles', 'Sold together'],
+        ['Finished home', 'Existing residence'],
+        ['Putatan', 'Near essential destinations'],
+      ].map(([value, label]) => (
+        <div key={value} className="bg-white px-5 py-8 md:px-8 md:py-10">
+          <p className="text-2xl font-semibold tracking-tight md:text-3xl">{value}</p>
+          <p className="mt-1 text-sm text-neutral-500">{label}</p>
         </div>
-        <div>
-          <p className="text-neutral-500 text-xs uppercase tracking-wide mb-1">Total Lot Area</p>
-          <p className="text-base font-medium text-neutral-900">{PROPERTY_DATA.totalLotArea} sqm</p>
-        </div>
-        <div>
-          <p className="text-neutral-500 text-xs uppercase tracking-wide mb-1">Floor Area</p>
-          <p className="text-sm font-medium text-neutral-500">{UNVERIFIED_LABEL}</p>
-        </div>
-        <div>
-          <p className="text-neutral-500 text-xs uppercase tracking-wide mb-1">Bed / Bath</p>
-          <p className="text-sm font-medium text-neutral-500">{UNVERIFIED_LABEL}</p>
-        </div>
-        <div className="col-span-2 md:col-span-1">
-          <p className="text-neutral-500 text-xs uppercase tracking-wide mb-1">TCT Status</p>
-          <p className="text-sm font-medium text-neutral-900">{PROPERTY_DATA.status}</p>
-        </div>
-      </div>
+      ))}
     </div>
   </section>
 );
 
-const Disclosures = () => (
-  <section id="disclosures" className="py-12 bg-white">
-    <div className="max-w-4xl mx-auto px-6">
-      <div className="bg-neutral-50 border-l-4 border-neutral-900 p-6 md:p-8 rounded-r-lg">
-        <div className="flex items-start gap-4">
-          <AlertCircle className="text-neutral-900 shrink-0 mt-1" size={24} />
-          <div>
-            <h3 className="text-lg font-semibold text-neutral-900 mb-2">What Buyers Should Know</h3>
-            <ul className="space-y-3 text-neutral-700 text-sm md:text-base leading-relaxed list-disc pl-5 marker:text-neutral-400">
-              <li>The property is composed of two adjoining titles sold together.</li>
-              <li>The combined titled area is exactly 195 sqm (Lot 5-A: 95 sqm, Lot 5-B: 100 sqm).</li>
-              <li>
-                <strong>A Section 4, Rule 74 annotation is visible on the titles.</strong> Cancellation and transfer
-                requirements are being verified with the Registry of Deeds.
-              </li>
-              <li>Exact floor area, room count, tax status, property condition, and financing eligibility remain subject to verification.</li>
-              <li>Buyers are strictly encouraged to conduct independent legal, technical, and physical due diligence prior to making an offer.</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-);
-
-const LotBreakdown = () => (
-  <section id="overview" className="py-16 bg-white border-t border-neutral-100">
-    <div className="max-w-4xl mx-auto px-6">
-      <h2 className="text-2xl font-semibold mb-8">Property Composition</h2>
-      <div className="grid sm:grid-cols-2 gap-6">
-        {PROPERTY_DATA.lots.map((lot) => (
-          <div key={lot.name} className="border border-neutral-200 rounded-lg p-6 bg-white">
-            <div className="flex justify-between items-start mb-4">
-              <h4 className="font-medium text-lg">{lot.name}</h4>
-              <span className="bg-neutral-100 text-neutral-600 text-xs px-2 py-1 rounded font-medium">{lot.area} sqm</span>
-            </div>
-            <p className="text-sm text-neutral-500 font-mono mb-4">{lot.tct}</p>
-            <div className="flex items-center gap-2 text-sm text-neutral-600">
-              <Check size={16} className="text-neutral-400" /> Contains part of existing structure
-            </div>
-          </div>
-        ))}
-      </div>
-      <p className="mt-6 flex items-center gap-2 text-sm text-neutral-500">
-        <MapPin size={16} className="text-neutral-400" />
-        {PROPERTY_DATA.address}, {PROPERTY_DATA.subdivision}, {PROPERTY_DATA.city}
-      </p>
-    </div>
-  </section>
-);
-
-const GallerySection = () => {
-  const [activeCategory, setActiveCategory] = useState('All');
-  const [lightboxIndex, setLightboxIndex] = useState(null);
-
-  const filteredImages =
-    activeCategory === 'All' ? IMAGES : IMAGES.filter((img) => img.category === activeCategory);
+const Gallery = () => {
+  const [category, setCategory] = useState('All');
+  const [active, setActive] = useState(null);
+  const filtered = useMemo(() => (category === 'All' ? IMAGES : IMAGES.filter((image) => image.category === category)), [category]);
 
   useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (lightboxIndex === null) return;
-      if (e.key === 'Escape') setLightboxIndex(null);
-      if (e.key === 'ArrowRight') setLightboxIndex((prev) => (prev + 1) % filteredImages.length);
-      if (e.key === 'ArrowLeft') setLightboxIndex((prev) => (prev - 1 + filteredImages.length) % filteredImages.length);
+    const onKey = (event) => {
+      if (active === null) return;
+      if (event.key === 'Escape') setActive(null);
+      if (event.key === 'ArrowRight') setActive((active + 1) % filtered.length);
+      if (event.key === 'ArrowLeft') setActive((active - 1 + filtered.length) % filtered.length);
     };
-    window.addEventListener('keydown', handleKeyDown);
-    document.body.style.overflow = lightboxIndex !== null ? 'hidden' : 'unset';
+    window.addEventListener('keydown', onKey);
+    document.body.style.overflow = active === null ? '' : 'hidden';
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = 'unset';
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = '';
     };
-  }, [lightboxIndex, filteredImages.length]);
+  }, [active, filtered.length]);
 
   return (
-    <section id="gallery" className="py-16 bg-neutral-50 border-t border-neutral-200">
-      <div className="max-w-6xl mx-auto px-6">
-        <h2 className="text-2xl font-semibold mb-6">Property Gallery</h2>
+    <section id="gallery" className="bg-neutral-50 py-20 md:py-28">
+      <div className="mx-auto max-w-7xl px-5 md:px-8">
+        <div className="mb-8 flex flex-col justify-between gap-5 md:flex-row md:items-end">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-neutral-500">Inside the property</p>
+            <h2 className="mt-2 text-3xl font-semibold tracking-tight md:text-5xl">See the home, not just the listing.</h2>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {CATEGORIES.map((item) => (
+              <button key={item} onClick={() => { setCategory(item); setActive(null); }} className={`rounded-full border px-4 py-2 text-sm font-medium ${category === item ? 'border-neutral-950 bg-neutral-950 text-white' : 'border-neutral-300 bg-white text-neutral-600 hover:border-neutral-500'}`}>
+                {item}
+              </button>
+            ))}
+          </div>
+        </div>
 
-        <div className="flex flex-wrap gap-2 mb-8">
-          {GALLERY_CATEGORIES.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors border ${
-                activeCategory === cat
-                  ? 'bg-neutral-900 text-white border-neutral-900'
-                  : 'bg-white text-neutral-600 border-neutral-200 hover:border-neutral-400'
-              }`}
-            >
-              {cat}
+        <div className="grid auto-rows-[190px] grid-cols-2 gap-3 md:auto-rows-[250px] md:grid-cols-4">
+          {filtered.map((image, index) => (
+            <button key={image.src} onClick={() => setActive(index)} className={`group relative overflow-hidden rounded-2xl bg-neutral-200 text-left ${index === 0 ? 'col-span-2 row-span-2' : ''} ${index === 3 ? 'md:col-span-2' : ''}`}>
+              <img src={imgUrl(image.src)} alt={image.alt} loading={index > 2 ? 'lazy' : 'eager'} className="h-full w-full object-cover transition duration-700 group-hover:scale-105" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent opacity-80" />
+              <span className="absolute bottom-4 left-4 text-xs font-semibold uppercase tracking-wider text-white">{image.category}</span>
+              <Maximize className="absolute right-4 top-4 text-white opacity-0 transition group-hover:opacity-100" size={20} />
             </button>
           ))}
         </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 auto-rows-[200px]">
-          {filteredImages.map((img, i) => (
-            <div
-              key={img.src}
-              onClick={() => setLightboxIndex(i)}
-              className={`relative cursor-pointer overflow-hidden rounded-lg bg-neutral-200 group ${
-                i === 0 ? 'col-span-2 row-span-2' : ''
-              }`}
-            >
-              <img
-                src={imgUrl(img.src)}
-                alt={img.alt}
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                loading={i > 2 ? 'lazy' : 'eager'}
-              />
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-                <Maximize className="text-white opacity-0 group-hover:opacity-100 transition-opacity" size={24} />
-              </div>
-              <span className="absolute top-2 left-2 bg-black/50 text-white text-[10px] uppercase tracking-wide px-2 py-0.5 rounded">
-                {img.category}
-              </span>
-            </div>
-          ))}
-        </div>
-
-        <p className="text-xs text-neutral-500 mt-4 italic">
-          *Images depict the current state of the property. Actual sizing and boundaries subject to technical survey.
+        <p className="mt-4 text-xs leading-relaxed text-neutral-500">
+          Photos show the property at the time they were taken. Furniture, appliances, equipment, and movable items are not included unless stated in the final agreement.
         </p>
       </div>
 
       <AnimatePresence>
-        {lightboxIndex !== null && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-neutral-950 flex flex-col items-center justify-center"
-          >
-            <div className="absolute top-0 left-0 w-full p-6 flex justify-between items-center text-white z-10">
-              <span className="text-sm font-medium">
-                {lightboxIndex + 1} / {filteredImages.length}
-                <span className="text-white/50 ml-3">{filteredImages[lightboxIndex].category}</span>
-              </span>
-              <button onClick={() => setLightboxIndex(null)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
-                <X size={24} />
-              </button>
-            </div>
-
-            <button
-              onClick={() => setLightboxIndex((prev) => (prev - 1 + filteredImages.length) % filteredImages.length)}
-              className="absolute left-4 md:left-8 p-3 text-white hover:bg-white/10 rounded-full transition-colors z-10"
-              aria-label="Previous image"
-            >
-              <ArrowLeft size={32} />
-            </button>
-
-            <img
-              src={imgUrl(filteredImages[lightboxIndex].src)}
-              alt={filteredImages[lightboxIndex].alt}
-              className="max-w-full max-h-[85vh] object-contain"
-            />
-
-            <button
-              onClick={() => setLightboxIndex((prev) => (prev + 1) % filteredImages.length)}
-              className="absolute right-4 md:right-8 p-3 text-white hover:bg-white/10 rounded-full transition-colors z-10"
-              aria-label="Next image"
-            >
-              <ArrowRightIcon size={32} />
-            </button>
+        {active !== null && (
+          <motion.div role="dialog" aria-modal="true" aria-label="Property photo gallery" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-4">
+            <button aria-label="Close gallery" onClick={() => setActive(null)} className="absolute right-5 top-5 rounded-full p-3 text-white hover:bg-white/10"><X /></button>
+            <button aria-label="Previous image" onClick={() => setActive((active - 1 + filtered.length) % filtered.length)} className="absolute left-3 rounded-full p-3 text-white hover:bg-white/10 md:left-8"><ArrowLeft size={30} /></button>
+            <img src={imgUrl(filtered[active].src)} alt={filtered[active].alt} className="max-h-[85vh] max-w-[88vw] object-contain" />
+            <button aria-label="Next image" onClick={() => setActive((active + 1) % filtered.length)} className="absolute right-3 rounded-full p-3 text-white hover:bg-white/10 md:right-8"><ArrowRight size={30} /></button>
+            <div className="absolute bottom-5 left-1/2 -translate-x-1/2 text-center text-sm text-white/80">{active + 1} / {filtered.length} · {filtered[active].category}</div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -390,326 +244,235 @@ const GallerySection = () => {
   );
 };
 
-const DocumentSection = () => (
-  <section id="documents" className="py-20 bg-neutral-900 text-white">
-    <div className="max-w-4xl mx-auto px-6">
-      <h2 className="text-3xl font-semibold mb-6">Due Diligence Documents</h2>
-      <p className="text-neutral-400 text-lg mb-10 leading-relaxed">
-        To maintain security and privacy, full sensitive documents are not publicly downloadable. A comprehensive
-        Due-Diligence Pack is available upon verified request.
-      </p>
-
-      <div className="space-y-4 mb-10">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between p-5 border border-neutral-700 rounded-lg bg-neutral-800/50">
-          <div className="flex items-center gap-4 mb-4 md:mb-0">
-            <div className="p-3 bg-neutral-800 rounded-md">
-              <FileCheck className="text-neutral-300" size={24} />
-            </div>
-            <div>
-              <p className="font-medium">Title Set (Redacted Preview)</p>
-              <p className="text-sm text-neutral-400">TCT 014-2017000*** &amp; TCT 014-2017000***</p>
-            </div>
-          </div>
-          <span className="bg-neutral-800 text-neutral-300 text-xs px-3 py-1 rounded-full border border-neutral-600">Available</span>
-        </div>
-
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between p-5 border border-neutral-700 rounded-lg bg-neutral-800/50 opacity-70">
-          <div className="flex items-center gap-4 mb-4 md:mb-0">
-            <div className="p-3 bg-neutral-800 rounded-md">
-              <FileText className="text-neutral-500" size={24} />
-            </div>
-            <div>
-              <p className="font-medium text-neutral-300">Tax Declarations</p>
-              <p className="text-sm text-neutral-500">Status pending verification</p>
-            </div>
-          </div>
-          <span className="bg-transparent text-neutral-500 text-xs px-3 py-1 rounded-full border border-neutral-700">For Verification</span>
-        </div>
-      </div>
-
-      <Button
-        onClick={() => scrollTo('inquire')}
-        className="w-full sm:w-auto bg-white text-neutral-900 hover:bg-neutral-200 h-12 px-8 flex gap-2"
-      >
-        <Download size={18} /> Request Due-Diligence Pack
-      </Button>
-    </div>
-  </section>
-);
-
-const Timeline = () => (
-  <section className="py-20 bg-white border-b border-neutral-200">
-    <div className="max-w-4xl mx-auto px-6">
-      <h2 className="text-2xl font-semibold mb-12">Buying Process</h2>
-      <div className="relative border-l-2 border-neutral-200 ml-3 md:ml-4">
-        {TIMELINE.map((item) => (
-          <div key={item.step} className="relative pl-10 md:pl-12 pb-10 last:pb-0">
-            <div className="absolute -left-[15px] md:-left-[17px] top-0 flex items-center justify-center w-8 h-8 rounded-full bg-neutral-900 text-white text-sm font-semibold">
-              {item.step}
-            </div>
-            <h4 className="font-medium text-lg text-neutral-900 mb-1">{item.title}</h4>
-            <p className="text-neutral-600 text-sm md:text-base leading-relaxed">{item.desc}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  </section>
-);
-
-const FaqSection = () => {
-  const [openIndex, setOpenIndex] = useState(0);
+const Location = () => {
+  const mapQuery = encodeURIComponent(`${PROPERTY.address}, ${PROPERTY.subdivision}, ${PROPERTY.city}`);
   return (
-    <section id="faq" className="py-20 bg-neutral-50 border-b border-neutral-200">
-      <div className="max-w-4xl mx-auto px-6">
-        <h2 className="text-2xl font-semibold mb-8">Frequently Asked Questions</h2>
-        <div className="divide-y divide-neutral-200 border-t border-b border-neutral-200">
-          {FAQS.map((faq, i) => {
-            const isOpen = openIndex === i;
-            return (
-              <div key={faq.q}>
-                <button
-                  onClick={() => setOpenIndex(isOpen ? null : i)}
-                  className="w-full flex justify-between items-center text-left py-5 gap-4"
-                >
-                  <span className="font-medium text-neutral-900 text-base md:text-lg">{faq.q}</span>
-                  <ChevronDown
-                    size={20}
-                    className={`shrink-0 text-neutral-500 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-                  />
-                </button>
-                <AnimatePresence initial={false}>
-                  {isOpen && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.25 }}
-                      className="overflow-hidden"
-                    >
-                      <p className="text-neutral-600 text-sm md:text-base leading-relaxed pb-5 pr-8">{faq.a}</p>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+    <section id="location" className="bg-white py-20 md:py-28">
+      <div className="mx-auto max-w-7xl px-5 md:px-8">
+        <div className="max-w-3xl">
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-neutral-500">Location advantage</p>
+          <h2 className="mt-2 text-3xl font-semibold tracking-tight md:text-5xl">Everything you need, close to home.</h2>
+          <p className="mt-4 max-w-2xl text-lg leading-relaxed text-neutral-600">City services, education, healthcare, shopping, and transport are all within the surrounding Putatan area.</p>
+        </div>
+
+        <div className="mt-10 grid gap-6 lg:grid-cols-[1.25fr_1fr]">
+          <div className="relative min-h-[420px] overflow-hidden rounded-3xl bg-neutral-100">
+            <iframe title="Approximate property location in Lakeview Homes, Putatan" src={`https://www.google.com/maps?q=${mapQuery}&output=embed`} className="absolute inset-0 h-full w-full border-0" loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
+            <div className="absolute bottom-4 left-4 right-4 rounded-2xl bg-white/95 p-4 shadow-lg backdrop-blur">
+              <p className="text-sm font-semibold">Lakeview Homes, Putatan</p>
+              <p className="mt-1 text-xs text-neutral-500">Map pin and travel times should be confirmed before final publication.</p>
+            </div>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+            {NEARBY.map(({ icon: Icon, title, text }) => (
+              <div key={title} className="rounded-2xl border border-neutral-200 p-5">
+                <div className="flex items-start gap-4">
+                  <div className="rounded-xl bg-neutral-100 p-3"><Icon size={21} /></div>
+                  <div><h3 className="font-semibold">{title}</h3><p className="mt-1 text-sm leading-relaxed text-neutral-600">{text}</p></div>
+                </div>
               </div>
-            );
-          })}
+            ))}
+            <a href={`https://www.google.com/maps/search/?api=1&query=${mapQuery}`} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-neutral-950 px-5 py-4 text-sm font-semibold text-white hover:bg-neutral-800">
+              <MapPin size={18} /> Open in Google Maps
+            </a>
+          </div>
         </div>
       </div>
     </section>
   );
 };
 
-// ==========================================
-// 4. INQUIRY FORM (react-hook-form + zod)
-// ==========================================
+const Details = () => (
+  <section id="details" className="bg-neutral-950 py-20 text-white md:py-28">
+    <div className="mx-auto max-w-7xl px-5 md:px-8">
+      <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/50">Property composition</p>
+          <h2 className="mt-2 text-3xl font-semibold tracking-tight md:text-5xl">Two adjoining lots. One complete property.</h2>
+          <p className="mt-5 max-w-xl text-lg leading-relaxed text-white/65">The titles indicate a combined land area of 195 sqm. Exact physical boundaries and improvements should be confirmed through survey and inspection.</p>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {PROPERTY.lots.map((lot) => (
+            <div key={lot.name} className="rounded-3xl border border-white/10 bg-white/5 p-7">
+              <p className="text-sm text-white/50">{lot.name}</p>
+              <p className="mt-2 text-4xl font-semibold">{lot.area} sqm</p>
+              <p className="mt-5 font-mono text-xs text-white/45">{lot.tct}</p>
+              <p className="mt-3 flex items-center gap-2 text-sm text-white/70"><Check size={16} /> Included in the combined sale</p>
+            </div>
+          ))}
+          <div className="rounded-3xl bg-white p-7 text-neutral-950 sm:col-span-2">
+            <p className="text-sm text-neutral-500">Combined titled area</p>
+            <p className="mt-2 text-5xl font-semibold">195 sqm</p>
+            <p className="mt-3 text-sm text-neutral-600">{PROPERTY.structure}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+);
+
+const Documents = () => {
+  const [open, setOpen] = useState(false);
+  return (
+    <section id="documents" className="bg-white py-20 md:py-28">
+      <div className="mx-auto max-w-4xl px-5 md:px-8">
+        <p className="text-xs font-bold uppercase tracking-[0.2em] text-neutral-500">Due diligence</p>
+        <h2 className="mt-2 text-3xl font-semibold tracking-tight md:text-5xl">Clear information. Serious-buyer access.</h2>
+        <p className="mt-4 text-lg leading-relaxed text-neutral-600">Sensitive documents are not publicly downloadable. Redacted previews and the full document pack may be requested for qualified due diligence.</p>
+
+        <div className="mt-9 space-y-3">
+          <div className="flex items-center justify-between rounded-2xl border border-neutral-200 p-5">
+            <div className="flex items-center gap-4"><FileCheck /><div><p className="font-semibold">Two-title set</p><p className="text-sm text-neutral-500">Redacted preview available</p></div></div>
+            <span className="rounded-full bg-neutral-100 px-3 py-1 text-xs font-medium">Available</span>
+          </div>
+          <div className="flex items-center justify-between rounded-2xl border border-neutral-200 p-5">
+            <div className="flex items-center gap-4"><FileText /><div><p className="font-semibold">Tax and supporting records</p><p className="text-sm text-neutral-500">Status to be confirmed</p></div></div>
+            <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-800">For verification</span>
+          </div>
+          <div className="overflow-hidden rounded-2xl border border-neutral-200">
+            <button onClick={() => setOpen(!open)} className="flex w-full items-center justify-between p-5 text-left">
+              <div><p className="font-semibold">View title disclosure</p><p className="text-sm text-neutral-500">Rule 74 annotation and buyer due-diligence notes</p></div>
+              <ChevronDown className={`transition ${open ? 'rotate-180' : ''}`} />
+            </button>
+            <AnimatePresence initial={false}>
+              {open && (
+                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                  <div className="border-t border-neutral-200 bg-neutral-50 p-5 text-sm leading-relaxed text-neutral-600">
+                    <p>A Section 4, Rule 74 annotation appears on both titles. The applicable procedure, requirements, cost, and timing for cancellation or transfer should be confirmed with the Registry of Deeds.</p>
+                    <p className="mt-3">Floor area, room count, tax status, property condition, financing eligibility, zoning, and physical boundaries remain subject to independent verification.</p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+        <Button className="mt-7" onClick={() => scrollTo('inquire')}>Request the property brief</Button>
+      </div>
+    </section>
+  );
+};
+
 const inquirySchema = z.object({
-  name: z.string().min(2, 'Please enter your full name.'),
-  email: z.string().email('Please enter a valid email address.'),
+  name: z.string().min(2, 'Please enter your name.'),
   phone: z.string().min(7, 'Please enter a valid contact number.'),
-  interest: z.enum(['viewing', 'due-diligence', 'general'], {
-    errorMap: () => ({ message: 'Please select an option.' }),
-  }),
-  message: z.string().max(1000, 'Message is too long.').optional(),
+  email: z.string().email('Please enter a valid email address.'),
+  interest: z.enum(['viewing', 'documents', 'question']),
+  message: z.string().max(1000).optional(),
 });
 
-const FieldError = ({ error }) =>
-  error ? (
-    <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
-      <AlertCircle size={12} /> {error.message}
-    </p>
-  ) : null;
+const Inquiry = () => {
+  const [opening, setOpening] = useState(false);
+  const { register, handleSubmit, formState: { errors } } = useForm({ resolver: zodResolver(inquirySchema), defaultValues: { interest: 'viewing' } });
 
-const InquiryForm = () => {
-  const [submitted, setSubmitted] = useState(false);
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors, isSubmitting },
-  } = useForm({
-    resolver: zodResolver(inquirySchema),
-    defaultValues: { name: '', email: '', phone: '', interest: 'viewing', message: '' },
-  });
-
-  const onSubmit = async (data) => {
-    // No backend is wired up in this preview. Simulate an async submission
-    // so the UX is complete; replace with a real endpoint when available.
-    await new Promise((r) => setTimeout(r, 800));
-    // eslint-disable-next-line no-console
-    console.log('Inquiry submitted:', data);
-    setSubmitted(true);
-    reset();
+  const onSubmit = (data) => {
+    setOpening(true);
+    const subject = encodeURIComponent(`Lakeview property inquiry — ${data.interest}`);
+    const body = encodeURIComponent(`Name: ${data.name}\nPhone: ${data.phone}\nEmail: ${data.email}\nInterest: ${data.interest}\n\n${data.message || ''}`);
+    window.location.href = `mailto:${CONTACT.email}?subject=${subject}&body=${body}`;
+    setTimeout(() => setOpening(false), 1000);
   };
 
+  const ErrorText = ({ error }) => error ? <p className="mt-1 flex items-center gap-1 text-xs text-red-600"><AlertCircle size={12} />{error.message}</p> : null;
+
   return (
-    <section id="inquire" className="py-20 bg-white">
-      <div className="max-w-2xl mx-auto px-6">
-        <div className="text-center mb-10">
-          <h2 className="text-3xl font-semibold mb-3">Request the Property Brief</h2>
-          <p className="text-neutral-600 leading-relaxed">
-            Submit your details to schedule a viewing or request the Due-Diligence Pack. Inquiries are handled directly
-            by the owner&rsquo;s representative.
-          </p>
+    <section id="inquire" className="relative overflow-hidden bg-neutral-900 py-20 text-white md:py-28">
+      <img src={imgUrl('/property/living/living-room.jpg')} alt="Living room background" className="absolute inset-0 h-full w-full object-cover opacity-20" />
+      <div className="absolute inset-0 bg-neutral-950/75" />
+      <div className="relative mx-auto grid max-w-7xl gap-10 px-5 md:px-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/50">Private viewing</p>
+          <h2 className="mt-2 text-4xl font-semibold tracking-tight md:text-6xl">See it in person.</h2>
+          <p className="mt-5 max-w-lg text-lg leading-relaxed text-white/70">The best way to understand the layout, location, and potential of the full 195 sqm property is to visit it.</p>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row lg:flex-col">
+            <a href={CONTACT.phoneHref} className="inline-flex items-center gap-3 text-white"><Phone size={19} /> {CONTACT.phoneDisplay}</a>
+            <a href={CONTACT.whatsappHref} target="_blank" rel="noreferrer" className="inline-flex items-center gap-3 text-white"><MessageCircle size={19} /> Message on WhatsApp</a>
+            <a href={`mailto:${CONTACT.email}`} className="inline-flex items-center gap-3 break-all text-white"><Mail size={19} /> {CONTACT.email}</a>
+          </div>
         </div>
 
-        <AnimatePresence mode="wait">
-          {submitted ? (
-            <motion.div
-              key="success"
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="border border-neutral-200 rounded-lg p-10 text-center bg-neutral-50"
-            >
-              <div className="mx-auto w-12 h-12 rounded-full bg-neutral-900 text-white flex items-center justify-center mb-4">
-                <Check size={24} />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Inquiry received</h3>
-              <p className="text-neutral-600 mb-6">
-                Thank you. Your inquiry has been recorded and the owner&rsquo;s representative will follow up shortly.
-              </p>
-              <Button variant="outline" onClick={() => setSubmitted(false)}>
-                Submit another inquiry
-              </Button>
-            </motion.div>
-          ) : (
-            <motion.form
-              key="form"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              onSubmit={handleSubmit(onSubmit)}
-              className="space-y-5"
-              noValidate
-            >
-              <div className="grid sm:grid-cols-2 gap-5">
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1.5">Full Name</label>
-                  <Input placeholder="Juan dela Cruz" {...register('name')} />
-                  <FieldError error={errors.name} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1.5">Contact Number</label>
-                  <Input placeholder="+63 9XX XXX XXXX" {...register('phone')} />
-                  <FieldError error={errors.phone} />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1.5">Email Address</label>
-                <Input type="email" placeholder="you@example.com" {...register('email')} />
-                <FieldError error={errors.email} />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1.5">I am interested in</label>
-                <select
-                  {...register('interest')}
-                  className="flex h-10 w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950"
-                >
-                  <option value="viewing">Scheduling a property viewing</option>
-                  <option value="due-diligence">Requesting the Due-Diligence Pack</option>
-                  <option value="general">General questions</option>
-                </select>
-                <FieldError error={errors.interest} />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1.5">Message (optional)</label>
-                <Textarea rows={4} placeholder="Any preliminary questions or preferred viewing dates..." {...register('message')} />
-                <FieldError error={errors.message} />
-              </div>
-
-              <Button type="submit" disabled={isSubmitting} className="w-full h-12 text-base">
-                {isSubmitting ? (
-                  <>
-                    <Loader2 size={18} className="animate-spin mr-2" /> Sending...
-                  </>
-                ) : (
-                  'Submit Inquiry'
-                )}
-              </Button>
-
-              <p className="text-xs text-neutral-500 text-center leading-relaxed">
-                By submitting, you acknowledge that all property details are subject to independent verification. This
-                form does not constitute a reservation or offer.
-              </p>
-            </motion.form>
-          )}
-        </AnimatePresence>
+        <form onSubmit={handleSubmit(onSubmit)} className="rounded-3xl bg-white p-6 text-neutral-950 shadow-2xl md:p-8" noValidate>
+          <h3 className="text-2xl font-semibold">Request a viewing or property brief</h3>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            <label className="text-sm font-medium">Full name<input {...register('name')} className="mt-1.5 h-11 w-full rounded-xl border border-neutral-300 px-3 font-normal outline-none focus:ring-2 focus:ring-neutral-950" /><ErrorText error={errors.name} /></label>
+            <label className="text-sm font-medium">Contact number<input {...register('phone')} className="mt-1.5 h-11 w-full rounded-xl border border-neutral-300 px-3 font-normal outline-none focus:ring-2 focus:ring-neutral-950" /><ErrorText error={errors.phone} /></label>
+            <label className="text-sm font-medium sm:col-span-2">Email<input type="email" {...register('email')} className="mt-1.5 h-11 w-full rounded-xl border border-neutral-300 px-3 font-normal outline-none focus:ring-2 focus:ring-neutral-950" /><ErrorText error={errors.email} /></label>
+            <label className="text-sm font-medium sm:col-span-2">I am interested in<select {...register('interest')} className="mt-1.5 h-11 w-full rounded-xl border border-neutral-300 px-3 font-normal outline-none focus:ring-2 focus:ring-neutral-950"><option value="viewing">Scheduling a viewing</option><option value="documents">Requesting the property brief</option><option value="question">Asking a question</option></select></label>
+            <label className="text-sm font-medium sm:col-span-2">Message<textarea rows="4" {...register('message')} className="mt-1.5 w-full rounded-xl border border-neutral-300 px-3 py-2 font-normal outline-none focus:ring-2 focus:ring-neutral-950" placeholder="Preferred viewing schedule or questions..." /></label>
+          </div>
+          <Button type="submit" className="mt-5 w-full py-3.5 text-base" disabled={opening}>{opening ? <><Loader2 className="mr-2 animate-spin" size={18} />Opening email…</> : 'Send Inquiry'}</Button>
+          <p className="mt-3 text-center text-xs leading-relaxed text-neutral-500">This opens your email app with the inquiry details filled in. Property information remains subject to independent verification.</p>
+        </form>
       </div>
     </section>
   );
 };
 
-const Footer = () => (
-  <footer className="bg-neutral-950 text-neutral-400 py-12">
-    <div className="max-w-6xl mx-auto px-6">
-      <div className="flex flex-col md:flex-row justify-between gap-8 mb-8">
-        <div className="max-w-sm">
-          <div className="font-semibold tracking-wide text-white text-sm mb-3">LAKEVIEW HOMES, PUTATAN</div>
-          <p className="text-sm leading-relaxed">
-            {PROPERTY_DATA.address}, {PROPERTY_DATA.subdivision}, {PROPERTY_DATA.city}.
-          </p>
-        </div>
-        <div className="flex gap-12 text-sm">
-          <div>
-            <p className="text-white font-medium mb-3">Explore</p>
-            <ul className="space-y-2">
-              <li><a href="#overview" className="hover:text-white transition-colors">Overview</a></li>
-              <li><a href="#gallery" className="hover:text-white transition-colors">Gallery</a></li>
-              <li><a href="#documents" className="hover:text-white transition-colors">Due Diligence</a></li>
-              <li><a href="#faq" className="hover:text-white transition-colors">FAQ</a></li>
-            </ul>
-          </div>
-          <div>
-            <p className="text-white font-medium mb-3">Inquire</p>
-            <ul className="space-y-2">
-              <li><a href="#inquire" className="hover:text-white transition-colors">Request Brief</a></li>
-              <li><a href="#inquire" className="hover:text-white transition-colors">Schedule Viewing</a></li>
-            </ul>
-          </div>
+const FAQ = () => {
+  const [open, setOpen] = useState(null);
+  return (
+    <section className="bg-neutral-50 py-20 md:py-28">
+      <div className="mx-auto max-w-4xl px-5 md:px-8">
+        <h2 className="text-3xl font-semibold tracking-tight md:text-5xl">Common buyer questions</h2>
+        <div className="mt-8 divide-y divide-neutral-200 border-y border-neutral-200">
+          {FAQS.map((faq, index) => (
+            <div key={faq.q}>
+              <button onClick={() => setOpen(open === index ? null : index)} className="flex w-full items-center justify-between gap-4 py-5 text-left font-semibold"><span>{faq.q}</span><ChevronDown className={`shrink-0 transition ${open === index ? 'rotate-180' : ''}`} /></button>
+              <AnimatePresence initial={false}>{open === index && <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden"><p className="pb-5 pr-8 text-sm leading-relaxed text-neutral-600">{faq.a}</p></motion.div>}</AnimatePresence>
+            </div>
+          ))}
         </div>
       </div>
-      <div className="border-t border-neutral-800 pt-6 text-xs leading-relaxed">
-        <p className="mb-2">
-          <strong className="text-neutral-300">Disclaimer:</strong> This page is a property preview for informational
-          purposes only. All areas, boundaries, structural details, tax status, annotations, and financing eligibility
-          are subject to independent verification. Nothing herein constitutes an offer, warranty, or professional legal
-          advice.
-        </p>
-        <p>&copy; {new Date().getFullYear()} Lakeview Homes property listing. All rights reserved.</p>
+    </section>
+  );
+};
+
+const MobileBar = () => (
+  <div className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-3 border-t border-neutral-200 bg-white p-2 shadow-[0_-10px_30px_rgba(0,0,0,0.08)] md:hidden">
+    <a href={CONTACT.phoneHref} className="flex flex-col items-center gap-1 rounded-xl py-2 text-xs font-semibold"><Phone size={19} />Call</a>
+    <a href={CONTACT.whatsappHref} target="_blank" rel="noreferrer" className="flex flex-col items-center gap-1 rounded-xl py-2 text-xs font-semibold"><MessageCircle size={19} />Message</a>
+    <button onClick={() => scrollTo('inquire')} className="flex flex-col items-center gap-1 rounded-xl bg-neutral-950 py-2 text-xs font-semibold text-white"><HeartHandshake size={19} />View</button>
+  </div>
+);
+
+const Footer = () => (
+  <footer className="bg-black px-5 py-12 text-neutral-400 md:px-8">
+    <div className="mx-auto max-w-7xl">
+      <div className="flex flex-col justify-between gap-7 md:flex-row">
+        <div><p className="font-semibold text-white">Lakeview Homes, Putatan</p><p className="mt-2 max-w-md text-sm">{PROPERTY.address}, {PROPERTY.subdivision}, {PROPERTY.city}</p></div>
+        <div className="text-sm"><p><a className="hover:text-white" href={CONTACT.phoneHref}>{CONTACT.phoneDisplay}</a></p><p className="mt-1"><a className="hover:text-white" href={`mailto:${CONTACT.email}`}>{CONTACT.email}</a></p></div>
+      </div>
+      <div className="mt-9 border-t border-neutral-800 pt-6 text-xs leading-relaxed">
+        <p>All dimensions, boundaries, structural details, title annotations, tax status, zoning, flood status, and financing eligibility are subject to independent verification. Nothing on this page constitutes a warranty, legal advice, or binding offer.</p>
+        <p className="mt-3">Designed and developed by Goodvibes LTD.</p>
       </div>
     </div>
   </footer>
 );
 
-// ==========================================
-// 5. APP ASSEMBLY
-// ==========================================
 export default function App() {
   const [scrolled, setScrolled] = useState(false);
-
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
-    window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
   return (
-    <div className="min-h-screen bg-white text-neutral-900 antialiased">
+    <div className="min-h-screen bg-white pb-16 text-neutral-950 antialiased md:pb-0">
       <Header scrolled={scrolled} />
       <main>
-        <HeroSection />
-        <PropertyFacts />
-        <Disclosures />
-        <LotBreakdown />
-        <GallerySection />
-        <DocumentSection />
-        <Timeline />
-        <FaqSection />
-        <InquiryForm />
+        <Hero />
+        <Highlights />
+        <Gallery />
+        <Location />
+        <Details />
+        <Documents />
+        <Inquiry />
+        <FAQ />
       </main>
       <Footer />
+      <MobileBar />
     </div>
   );
 }
