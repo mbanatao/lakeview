@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { motion, AnimatePresence } from 'framer-motion';
+import { twMerge } from 'tailwind-merge';
 import {
   Maximize,
   FileText,
@@ -88,8 +89,10 @@ const Button = ({ children, variant = 'primary', className = '', ...props }) => 
     outline: 'border border-neutral-200 bg-white hover:bg-neutral-100 text-neutral-900',
     ghost: 'hover:bg-neutral-100 hover:text-neutral-900 text-neutral-600',
   };
+  // twMerge lets a per-instance className reliably override the variant's
+  // colors (e.g. a white CTA on the dark hero), regardless of CSS source order.
   return (
-    <button className={`${baseStyle} ${variants[variant]} px-4 py-2 ${className}`} {...props}>
+    <button className={twMerge(baseStyle, variants[variant], 'px-4 py-2', className)} {...props}>
       {children}
     </button>
   );
