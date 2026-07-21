@@ -51,6 +51,12 @@ const IMAGES = [
   { src: '/property/office/home-office.jpg', alt: 'Interior space configured as a home office', category: 'Home Office' },
 ];
 
+// Optional prefix for image URLs. Defaults to '' so images are served from the
+// app's own /public folder. A deployment can set VITE_IMAGE_BASE to serve them
+// from an external origin (e.g. a CDN or the source repo) without bundling them.
+const IMAGE_BASE = import.meta.env.VITE_IMAGE_BASE ?? '';
+const imgUrl = (path) => `${IMAGE_BASE}${path}`;
+
 const HERO_IMAGE = '/property/exterior/facade.jpg';
 
 const GALLERY_CATEGORIES = ['All', 'Exterior', 'Living Areas', 'Bedrooms', 'Kitchen & Dining', 'Home Office'];
@@ -150,7 +156,7 @@ const scrollTo = (id) => document.getElementById(id)?.scrollIntoView({ behavior:
 const HeroSection = () => (
   <section className="relative h-[85vh] w-full bg-neutral-900 flex flex-col justify-end pb-24 md:pb-32 overflow-hidden">
     <div className="absolute inset-0 z-0">
-      <img src={HERO_IMAGE} alt="Property facade" className="w-full h-full object-cover opacity-50" />
+      <img src={imgUrl(HERO_IMAGE)} alt="Property facade" className="w-full h-full object-cover opacity-50" />
       <div className="absolute inset-0 bg-gradient-to-t from-neutral-900 via-neutral-900/60 to-neutral-900/20" />
     </div>
     <div className="relative z-10 px-6 max-w-6xl mx-auto w-full">
@@ -315,7 +321,7 @@ const GallerySection = () => {
               }`}
             >
               <img
-                src={img.src}
+                src={imgUrl(img.src)}
                 alt={img.alt}
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 loading={i > 2 ? 'lazy' : 'eager'}
@@ -362,7 +368,7 @@ const GallerySection = () => {
             </button>
 
             <img
-              src={filteredImages[lightboxIndex].src}
+              src={imgUrl(filteredImages[lightboxIndex].src)}
               alt={filteredImages[lightboxIndex].alt}
               className="max-w-full max-h-[85vh] object-contain"
             />
