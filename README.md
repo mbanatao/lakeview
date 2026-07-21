@@ -65,3 +65,5 @@ The real property images are stored under `public/property/`. The supplied payme
 ## Important payment note
 
 A static GCash QR does not provide automatic payment confirmation. The payment must be manually reviewed by Goodvibes LTD. After an authorized administrator approves the submission, the website unlocks automatically without a code change or redeployment.
+
+Deployment refresh: production build requested for `lakeview-putatan.vercel.app` on 2026-07-21.
