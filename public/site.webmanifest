@@ -1,0 +1,8 @@
+{
+  "name": "Lakeview Homes Property",
+  "short_name": "Lakeview Property",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#171717"
+}
