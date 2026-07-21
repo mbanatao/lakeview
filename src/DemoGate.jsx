@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Check, Clock3, ExternalLink, Loader2, LockKeyhole, Mail, MessageCircle, Phone, RefreshCw, ShieldCheck, Upload } from 'lucide-react';
+import { Check, Clock3, ExternalLink, Loader2, Mail, MessageCircle, Phone, RefreshCw, ShieldCheck, Upload } from 'lucide-react';
 
 const SUPABASE_URL = 'https://rkthpfdzzisudaxxqvgn.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_0O4UUonjn2-aNa0VH0siVg_Mo_PdIKY';
@@ -8,7 +8,7 @@ const ADMIN_EMAIL = 'markjohnsonbanatao888@gmail.com';
 const PHONE = '0968-184-1001';
 const PHONE_LINK = 'tel:+639681841001';
 const WHATSAPP = 'https://wa.me/639681841001?text=Hello%20Goodvibes%20LTD%2C%20I%20am%20contacting%20you%20about%20my%20property%20website%20activation.';
-const QR_PATH = '/payments/goodvibes-gcash-qr.jpg';
+const QR_PATH = '/payments/goodvibes-gcash-qr.svg';
 
 const api = async (action, options = {}) => {
   const response = await fetch(`${FUNCTION_URL}?action=${encodeURIComponent(action)}`, {
@@ -81,12 +81,7 @@ function ActivationModal({ order, onRefresh }) {
       if (!uploaded.ok) throw new Error('Receipt upload failed. Please try again.');
       const result = await api('submit-payment', {
         method: 'POST',
-        body: JSON.stringify({
-          action: 'submit-payment',
-          ...form,
-          amountCentavos: 500000,
-          receiptPath: upload.path,
-        }),
+        body: JSON.stringify({ action: 'submit-payment', ...form, amountCentavos: 500000, receiptPath: upload.path }),
       });
       setSubmissionReference(result.order.submission_reference);
       setSubmitted(true);
